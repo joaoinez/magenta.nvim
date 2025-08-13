@@ -1,13 +1,6 @@
-import { Sidebar } from "./sidebar.ts";
-import * as TEA from "./tea/tea.ts";
-import { BINDING_KEYS, type BindingKey } from "./tea/bindings.ts";
-import { pos } from "./tea/view.ts";
 import type { Nvim } from "./nvim/nvim-node";
 import { Lsp } from "./lsp.ts";
-import { getCurrentBuffer, getcwd, getpos, notifyErr } from "./nvim/nvim.ts";
-import type { BufNr, Line } from "./nvim/buffer.ts";
-import { pos1col1to0, type Row0Indexed } from "./nvim/window.ts";
-import { getMarkdownExt } from "./utils/markdown.ts";
+import { getcwd, notifyErr } from "./nvim/nvim.ts";
 import {
   parseOptions,
   loadProjectSettings,
@@ -15,20 +8,11 @@ import {
   type MagentaOptions,
   getActiveProfile,
 } from "./options.ts";
-import { InlineEditManager } from "./inline-edit/inline-edit-app.ts";
-import type { RootMsg, SidebarMsg } from "./root-msg.ts";
-import { Chat } from "./chat/chat.ts";
+import type { RootMsg } from "./root-msg.ts";
 import type { Dispatch } from "./tea/tea.ts";
 import { BufferTracker } from "./buffer-tracker.ts";
 import { ChangeTracker } from "./change-tracker.ts";
-import {
-  relativePath,
-  resolveFilePath,
-  type UnresolvedFilePath,
-  type AbsFilePath,
-  type NvimCwd,
-  detectFileType,
-} from "./utils/files.ts";
+import type { NvimCwd } from "./utils/files.ts";
 import { assertUnreachable } from "./utils/assertUnreachable.ts";
 import {
   EditPredictionController,
@@ -47,11 +31,6 @@ const MAGENTA_TEXT_DOCUMENT_DID_CHANGE = "magentaTextDocumentDidChange";
 const MAGENTA_UI_EVENTS = "magentaUiEvents";
 
 export class Magenta {
-  public sidebar: Sidebar;
-  public chatApp: TEA.App<Chat>;
-  public mountedChatApp: TEA.MountedApp | undefined;
-  public inlineEditManager: InlineEditManager;
-  public chat: Chat;
   public dispatch: Dispatch<RootMsg>;
   public bufferTracker: BufferTracker;
   public changeTracker: ChangeTracker;
@@ -68,42 +47,11 @@ export class Magenta {
 
     this.dispatch = (msg: RootMsg) => {
       try {
-        this.chat.update(msg);
         this.editPredictionController.update(msg);
-
-        if (msg.type == "sidebar-msg") {
-          this.handleSidebarMsg(msg.msg);
-        }
-        if (this.mountedChatApp) {
-          this.mountedChatApp.render();
-        }
-
-        this.sidebar.renderInputHeader().catch((e) => {
-          this.nvim.logger.error(
-            `Error rendering sidebar input header: ${e instanceof Error ? e.message + "\n" + e.stack : JSON.stringify(e)}`,
-          );
-        });
       } catch (e) {
         nvim.logger.error(e as Error);
       }
     };
-
-    this.chat = new Chat({
-      dispatch: this.dispatch,
-      getDisplayWidth: () => {
-        if (this.sidebar.state.state == "visible") {
-          return this.sidebar.state.displayWidth;
-        } else {
-          // a placeholder value
-          return 100;
-        }
-      },
-      bufferTracker: this.bufferTracker,
-      cwd: this.cwd,
-      nvim: this.nvim,
-      options: this.options,
-      lsp: this.lsp,
-    });
 
     this.editPredictionController = new EditPredictionController(
       1 as EditPredictionId,
@@ -115,350 +63,16 @@ export class Magenta {
         options: this.options,
       },
     );
-
-    this.sidebar = new Sidebar(
-      this.nvim,
-      () => this.getActiveProfile(),
-      () => this.chat.getActiveThread().getLastStopTokenCount(),
-    );
-
-    this.chatApp = TEA.createApp<Chat>({
-      nvim: this.nvim,
-      initialModel: this.chat,
-      View: () => this.chat.view(),
-    });
-
-    this.inlineEditManager = new InlineEditManager({
-      nvim,
-      cwd: this.cwd,
-      options,
-      getMessages: () => this.chat.getMessages(),
-    });
   }
 
   getActiveProfile() {
     return getActiveProfile(this.options.profiles, this.options.activeProfile);
-  }
-  private handleSidebarMsg(msg: SidebarMsg): void {
-    switch (msg.type) {
-      case "setup-resubmit":
-        if (
-          this.sidebar &&
-          this.sidebar.state &&
-          this.sidebar.state.inputBuffer
-        ) {
-          this.sidebar.state.inputBuffer
-            .setLines({
-              start: 0 as Row0Indexed,
-              end: -1 as Row0Indexed,
-              lines: msg.lastUserMessage.split("\n") as Line[],
-            })
-            .catch((error) => {
-              this.nvim.logger.error(`Error updating sidebar input: ${error}`);
-            });
-        }
-        break;
-      case "scroll-to-last-user-message":
-        if (this.mountedChatApp) {
-          (async () => {
-            await this.mountedChatApp?.waitForRender();
-            await this.sidebar.scrollToLastUserMessage();
-          })().catch((error: Error) =>
-            this.nvim.logger.error(
-              `Error scrolling to last user message: ${error.message + "\n" + error.stack}`,
-            ),
-          );
-        }
-        break;
-      case "scroll-to-bottom":
-        if (this.mountedChatApp) {
-          (async () => {
-            await this.mountedChatApp?.waitForRender();
-            await this.sidebar.scrollToBottom();
-          })().catch((error: Error) =>
-            this.nvim.logger.error(
-              `Error scrolling to bottom: ${error.message + "\n" + error.stack}`,
-            ),
-          );
-        }
-        break;
-      default:
-        assertUnreachable(msg);
-    }
   }
 
   async command(input: string): Promise<void> {
     const [command, ...rest] = input.trim().split(/\s+/);
     this.nvim.logger.debug(`Received command ${command}`);
     switch (command) {
-      case "profile": {
-        const profileName = rest.join(" ");
-        const profile = this.options.profiles.find(
-          (p) => p.name === profileName,
-        );
-
-        if (profile) {
-          this.options.activeProfile = profile.name;
-
-          // Update inline edit manager with new options
-          this.inlineEditManager.updateOptions(this.options);
-
-          this.dispatch({
-            type: "thread-msg",
-            id: this.chat.getActiveThread().id,
-            msg: {
-              type: "update-profile",
-              profile: this.getActiveProfile(),
-            },
-          });
-        } else {
-          this.nvim.logger.error(`Profile "${profileName}" not found.`);
-          // eslint-disable-next-line @typescript-eslint/no-floating-promises
-          notifyErr(
-            this.nvim,
-            "profile command",
-            new Error(`Profile "${profileName}" not found.`),
-          );
-        }
-        break;
-      }
-
-      case "context-files": {
-        if (!this.sidebar.isVisible()) {
-          await this.command("toggle");
-        }
-
-        const thread = this.chat.getActiveThread();
-
-        const parts = input.trim().match(/[^\s']+|'([^']*)'|\S+/g) || [];
-        const paths = parts
-          .slice(1)
-          .map((str) => (str.startsWith("'") ? str.slice(1, -1) : str))
-          .map((str) => str.trim());
-
-        for (const filePath of paths) {
-          const cwd = await getcwd(this.nvim);
-          const absFilePath = resolveFilePath(
-            cwd,
-            filePath as UnresolvedFilePath,
-          );
-          const relFilePath = relativePath(cwd, absFilePath);
-          const fileTypeInfo = await detectFileType(absFilePath);
-          if (!fileTypeInfo) {
-            this.nvim.logger.error(`File ${filePath} does not exist.`);
-            continue;
-          }
-
-          this.dispatch({
-            type: "thread-msg",
-            id: thread.id,
-            msg: {
-              type: "context-manager-msg",
-              msg: {
-                type: "add-file-context",
-                absFilePath,
-                relFilePath,
-                fileTypeInfo,
-              },
-            },
-          });
-        }
-
-        break;
-      }
-
-      case "toggle": {
-        const buffers = await this.sidebar.toggle(
-          this.options.sidebarPosition,
-          this.options.sidebarPositionOpts,
-        );
-        if (buffers && !this.mountedChatApp) {
-          this.mountedChatApp = await this.chatApp.mount({
-            nvim: this.nvim,
-            buffer: buffers.displayBuffer,
-            startPos: pos(0 as Row0Indexed, 0),
-            endPos: pos(-1 as Row0Indexed, -1),
-          });
-          this.nvim.logger.debug(`Chat mounted.`);
-        }
-        break;
-      }
-
-      case "send": {
-        const text = await this.sidebar.getMessage();
-        this.nvim.logger.debug(`current message: ${text}`);
-        if (!text) return;
-
-        this.dispatch({
-          type: "thread-msg",
-          id: this.chat.getActiveThread().id,
-          msg: {
-            type: "send-message",
-            messages: [
-              {
-                type: "user",
-                text,
-              },
-            ],
-          },
-        });
-
-        break;
-      }
-
-      case "clear":
-        this.dispatch({
-          type: "thread-msg",
-          id: this.chat.getActiveThread().id,
-          msg: {
-            type: "clear",
-            profile: this.getActiveProfile(),
-          },
-        });
-        break;
-
-      case "abort": {
-        this.dispatch({
-          type: "thread-msg",
-          id: this.chat.getActiveThread().id,
-          msg: {
-            type: "abort",
-          },
-        });
-
-        this.inlineEditManager.abort();
-
-        break;
-      }
-
-      case "new-thread": {
-        if (!this.sidebar.isVisible()) {
-          await this.command("toggle");
-        }
-
-        this.dispatch({
-          type: "chat-msg",
-          msg: {
-            type: "new-thread",
-          },
-        });
-
-        break;
-      }
-
-      case "threads-navigate-up": {
-        this.dispatch({
-          type: "chat-msg",
-          msg: {
-            type: "threads-navigate-up",
-          },
-        });
-
-        // Scroll to bottom when navigating to threads overview
-        // (The chat handler will determine if we go to overview or parent)
-        this.dispatch({
-          type: "sidebar-msg",
-          msg: {
-            type: "scroll-to-bottom",
-          },
-        });
-
-        break;
-      }
-
-      case "threads-overview": {
-        // Backward compatibility - force navigation to overview
-        this.dispatch({
-          type: "chat-msg",
-          msg: {
-            type: "threads-overview",
-          },
-        });
-
-        this.dispatch({
-          type: "sidebar-msg",
-          msg: {
-            type: "scroll-to-bottom",
-          },
-        });
-
-        break;
-      }
-
-      case "paste-selection": {
-        const [startPos, endPos, cwd, currentBuffer] = await Promise.all([
-          getpos(this.nvim, "'<"),
-          getpos(this.nvim, "'>"),
-          getcwd(this.nvim),
-          getCurrentBuffer(this.nvim),
-        ]);
-
-        const lines = await currentBuffer.getText({
-          startPos: pos1col1to0(startPos),
-          endPos: pos1col1to0(endPos),
-        });
-
-        const relFileName = relativePath(cwd, await currentBuffer.getName());
-        const content = `
-Here is a snippet from the file \`${relFileName}\`
-\`\`\`${getMarkdownExt(relFileName)}
-${lines.join("\n")}
-\`\`\`
-`;
-
-        if (!this.sidebar.isVisible()) {
-          await this.command("toggle");
-        }
-
-        const inputBuffer = this.sidebar.state.inputBuffer;
-        if (!inputBuffer) {
-          throw new Error(`Unable to init inputBuffer`);
-        }
-
-        await inputBuffer.setLines({
-          start: -1 as Row0Indexed,
-          end: -1 as Row0Indexed,
-          lines: content.split("\n") as Line[],
-        });
-
-        break;
-      }
-
-      case "start-inline-edit-selection": {
-        const [startPos, endPos] = await Promise.all([
-          getpos(this.nvim, "'<"),
-          getpos(this.nvim, "'>"),
-        ]);
-
-        await this.inlineEditManager.initInlineEdit({
-          startPos,
-          endPos,
-        });
-        break;
-      }
-
-      case "start-inline-edit": {
-        await this.inlineEditManager.initInlineEdit();
-        break;
-      }
-
-      case "replay-inline-edit": {
-        await this.inlineEditManager.replay();
-        break;
-      }
-
-      case "replay-inline-edit-selection": {
-        const [startPos, endPos] = await Promise.all([
-          getpos(this.nvim, "'<"),
-          getpos(this.nvim, "'>"),
-        ]);
-
-        await this.inlineEditManager.replay({
-          startPos,
-          endPos,
-        });
-        break;
-      }
 
       case "predict-edit": {
         if (
@@ -517,25 +131,6 @@ ${lines.join("\n")}
         break;
       }
 
-      case "submit-inline-edit": {
-        if (rest.length != 1 || typeof rest[0] != "string") {
-          this.nvim.logger.error(
-            `Expected bufnr argument to submit-inline-edit`,
-          );
-          return;
-        }
-
-        const bufnr = Number.parseInt(rest[0]) as BufNr;
-        const chat = this.chatApp.getState();
-        if (chat.status !== "running") {
-          this.nvim.logger.error(`Chat is not running.`);
-          return;
-        }
-
-        await this.inlineEditManager.submitInlineEdit(bufnr);
-        break;
-      }
-
       default:
         this.nvim.logger.error(`Unrecognized command ${command}\n`);
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -549,26 +144,17 @@ ${lines.join("\n")}
 
   onKey(args: string[]) {
     const key = args[0];
-    if (this.mountedChatApp) {
-      if (BINDING_KEYS.indexOf(key as BindingKey) > -1) {
-        this.mountedChatApp.onKey(key as BindingKey);
-      } else {
-        this.nvim.logger.error(`Unexpected MagentaKey ${JSON.stringify(key)}`);
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        notifyErr(
-          this.nvim,
-          "unexpected key",
-          new Error(`Unexpected MagentaKey ${JSON.stringify(key)}`),
-        );
-      }
-    }
+    this.nvim.logger.error(`Unexpected MagentaKey ${JSON.stringify(key)}`);
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    notifyErr(
+      this.nvim,
+      "unexpected key",
+      new Error(`Unexpected MagentaKey ${JSON.stringify(key)}`),
+    );
   }
 
   async onWinClosed() {
-    await Promise.all([
-      this.sidebar.onWinClosed(),
-      this.inlineEditManager.onWinClosed(),
-    ]);
+    // No windows to close in edit prediction only mode
   }
 
   onBufferTrackerEvent(
@@ -626,15 +212,7 @@ ${lines.join("\n")}
   }
 
   destroy() {
-    if (this.mountedChatApp) {
-      this.mountedChatApp.unmount();
-      this.mountedChatApp = undefined;
-    }
-    this.inlineEditManager.destroy().catch((e) => {
-      this.nvim.logger.warn(
-        `Error destroying inline edit manager: ${e instanceof Error ? e.message + "\n" + e.stack : JSON.stringify(e)}`,
-      );
-    });
+    // No cleanup needed for edit prediction only mode
   }
 
   static async start(nvim: Nvim) {
@@ -703,7 +281,7 @@ ${lines.join("\n")}
         }
 
         const absFilePath = args[1] as AbsFilePath;
-        const bufnr = args[2] as BufNr;
+        const bufnr = args[2] as number;
 
         magenta.onBufferTrackerEvent(eventType, absFilePath, bufnr);
       } catch (err) {

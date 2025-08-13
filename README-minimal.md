@@ -14,7 +14,7 @@ magenta-prediction.nvim provides AI-powered edit prediction for neovim. It predi
 ## Features
 
 - **AI-powered edit prediction**: Uses LLMs to predict your next edit based on context
-- **Multiple provider support**: Works with Anthropic, OpenAI, Ollama and Bedrock
+- **Multiple provider support**: Works with Anthropic, OpenAI, Ollama, and Bedrock
 - **Real-time suggestions**: Shows predictions as virtual text that can be accepted or dismissed
 - **Change tracking**: Automatically tracks your recent edits to provide better predictions
 - **Customizable**: Configure prediction behavior, system prompts, and provider settings
@@ -126,16 +126,16 @@ The plugin provides the following default keymaps:
 ## Providers
 
 ### Anthropic
-Set the `ANTHROPIC_API_KEY` environment variable with your Anthropic API key.
+Set `ANTHROPIC_API_KEY` environment variable with your Anthropic API key.
 
 ### OpenAI  
-Set the `OPENAI_API_KEY` environment variable with your OpenAI API key.
+Set `OPENAI_API_KEY` environment variable with your OpenAI API key.
 
 ### Ollama
 No API key required. Make sure Ollama is running and configure the model in your profile.
 
 ### Bedrock
-Configure your AWS credentials and region in your profile settings.
+Configure your AWS credentials and region in the profile settings.
 
 ## Contributing
 

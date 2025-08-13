@@ -1,6 +1,5 @@
 local Utils = require("magenta.utils")
 local Options = require("magenta.options")
-require("magenta.actions")
 local M = {}
 local LspServer = require('magenta.lsp-server')
 
@@ -15,8 +14,8 @@ M.testSetup = function()
   vim.api.nvim_set_keymap(
     "n",
     "<leader>m",
-    ":Magenta toggle<CR>",
-    { silent = true, noremap = true, desc = "Toggle Magenta window" }
+    ":Magenta predict-edit<CR>",
+    { silent = true, noremap = true, desc = "Trigger edit prediction" }
   )
 end
 
@@ -52,37 +51,16 @@ M.start = function(silent)
   end
 end
 
-local normal_commands = {
-  "abort",
-  "clear",
-  "context-files",
-  "debug-prediction-message",
-  "profile",
-  "start-inline-edit",
-  "replay-inline-edit",
-  "toggle",
-  "new-thread",
-  "threads-overview",
+local prediction_commands = {
   "predict-edit",
-  "accept-prediction",
+  "accept-prediction", 
   "dismiss-prediction",
-}
-
-local visual_commands = {
-  "start-inline-edit-selection",
-  "replay-inline-edit-selection",
-  "paste-selection",
+  "debug-prediction-message"
 }
 
 M.bridge = function(channelId)
   -- Store the channel ID for later use by other functions
   M.channel_id = channelId
-
-  -- Initialize completion support
-  local completion_source = require('magenta.completion.source')
-  if completion_source.setup then
-    completion_source.setup()
-  end
 
   -- Setup LSP server for change tracking
   local notify_fn = function(data)
@@ -136,17 +114,15 @@ M.bridge = function(channelId)
     {
       nargs = "+",
       range = true,
-      desc = "Execute Magenta command",
+      desc = "Execute Magenta prediction command",
       complete = function(ArgLead, CmdLine)
-        local commands = CmdLine:match("^'<,'>") and visual_commands or normal_commands
-
         if ArgLead == '' then
-          return commands
+          return prediction_commands
         end
         -- Filter based on ArgLead
         return vim.tbl_filter(function(cmd)
           return cmd:find('^' .. ArgLead)
-        end, commands)
+        end, prediction_commands)
       end
     }
   )
@@ -396,107 +372,6 @@ M.wait_for_lsp_attach = function(bufnr, capability, timeout_ms)
   )
 end
 
-M.lsp_hover_request = function(requestId, bufnr, row, col)
-  local success = M.wait_for_lsp_attach(bufnr, "hoverProvider", 1000)
-  if not success then
-    M.lsp_response(requestId, "Timeout waiting for LSP client with hoverProvider to attach")
-    return
-  end
 
-  vim.lsp.buf_request_all(
-    bufnr,
-    "textDocument/hover",
-    {
-      textDocument = {
-        uri = vim.uri_from_bufnr(bufnr)
-      },
-      position = {
-        line = row,
-        character = col
-      }
-    },
-    function(responses)
-      M.lsp_response(requestId, responses)
-    end
-  )
-end
-
-M.lsp_references_request = function(requestId, bufnr, row, col)
-  local success = M.wait_for_lsp_attach(bufnr, "referencesProvider", 1000)
-  if not success then
-    M.lsp_response(requestId, "Timeout waiting for LSP client with referencesProvider to attach")
-    return
-  end
-
-  vim.lsp.buf_request_all(
-    bufnr,
-    "textDocument/references",
-    {
-      textDocument = {
-        uri = vim.uri_from_bufnr(bufnr)
-      },
-      position = {
-        line = row,
-        character = col
-      },
-      context = {
-        includeDeclaration = true
-      }
-    },
-    function(responses)
-      M.lsp_response(requestId, responses)
-    end
-  )
-end
-
-M.lsp_definition_request = function(requestId, bufnr, row, col)
-  local success = M.wait_for_lsp_attach(bufnr, "definitionProvider", 1000)
-  if not success then
-    M.lsp_response(requestId, "Timeout waiting for LSP client with definitionProvider to attach")
-    return
-  end
-
-  vim.lsp.buf_request_all(
-    bufnr,
-    "textDocument/definition",
-    {
-      textDocument = {
-        uri = vim.uri_from_bufnr(bufnr)
-      },
-      position = {
-        line = row,
-        character = col
-      }
-    },
-    function(responses)
-      M.lsp_response(requestId, responses)
-    end
-  )
-end
-
-M.lsp_type_definition_request = function(requestId, bufnr, row, col)
-  local success = M.wait_for_lsp_attach(bufnr, "typeDefinitionProvider", 1000)
-  if not success then
-    M.lsp_response(requestId, "Timeout waiting for LSP client with typeDefinitionProvider to attach")
-    return
-  end
-
-  vim.lsp.buf_request_all(
-    bufnr,
-    "textDocument/typeDefinition",
-    {
-      textDocument = {
-        uri = vim.uri_from_bufnr(bufnr)
-      },
-      position = {
-        line = row,
-        character = col
-      }
-    },
-    function(responses)
-      M.lsp_response(requestId, responses)
-    end
-  )
-end
 
 return M
