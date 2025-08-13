@@ -1,25 +1,26 @@
 import type { Nvim } from "./nvim/nvim-node";
-import { Lsp } from "./lsp.ts";
-import { getcwd, notifyErr } from "./nvim/nvim.ts";
+import { Lsp } from "./lsp";
+import { getcwd, notifyErr } from "./nvim/nvim";
 import {
   parseOptions,
   loadProjectSettings,
   mergeOptions,
   type MagentaOptions,
   getActiveProfile,
-} from "./options.ts";
-import type { RootMsg } from "./root-msg.ts";
-import type { Dispatch } from "./tea/tea.ts";
-import { BufferTracker } from "./buffer-tracker.ts";
-import { ChangeTracker } from "./change-tracker.ts";
-import type { NvimCwd } from "./utils/files.ts";
-import { assertUnreachable } from "./utils/assertUnreachable.ts";
+} from "./options";
+import type { RootMsg } from "./root-msg";
+import type { Dispatch } from "./tea/tea";
+import { BufferTracker } from "./buffer-tracker";
+import { ChangeTracker } from "./change-tracker";
+import type { NvimCwd, AbsFilePath } from "./utils/files";
+import type { BufNr } from "./nvim/buffer";
+import { assertUnreachable } from "./utils/assertUnreachable";
 import {
   EditPredictionController,
   type EditPredictionId,
-} from "./edit-prediction/edit-prediction-controller.ts";
-import { initializeMagentaHighlightGroups } from "./nvim/extmarks.ts";
-import { MAGENTA_HIGHLIGHT_NAMESPACE } from "./nvim/buffer.ts";
+} from "./edit-prediction/edit-prediction-controller";
+import { initializeMagentaHighlightGroups } from "./nvim/extmarks";
+import { MAGENTA_HIGHLIGHT_NAMESPACE } from "./nvim/buffer";
 
 // these constants should match lua/magenta/init.lua
 const MAGENTA_COMMAND = "magentaCommand";
@@ -70,7 +71,7 @@ export class Magenta {
   }
 
   async command(input: string): Promise<void> {
-    const [command, ...rest] = input.trim().split(/\s+/);
+    const [command] = input.trim().split(/\s+/);
     this.nvim.logger.debug(`Received command ${command}`);
     switch (command) {
 
@@ -281,7 +282,7 @@ export class Magenta {
         }
 
         const absFilePath = args[1] as AbsFilePath;
-        const bufnr = args[2] as number;
+        const bufnr = args[2] as number as BufNr;
 
         magenta.onBufferTrackerEvent(eventType, absFilePath, bufnr);
       } catch (err) {

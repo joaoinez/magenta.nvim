@@ -1,27 +1,50 @@
 import { resolve } from "node:path";
-import winston from "winston";
 import {
   MessageType,
   type Client,
   type LogLevel,
   type RPCMessage,
-} from "./types.ts";
+} from "./types";
 
-export function createLogger(client: Client, level: LogLevel, file?: string) {
+export function createLogger(client: Client, _level: LogLevel, file?: string) {
   const filename = file ? resolve(file) : `/tmp/${client.name}.log`;
-  const logger = winston.createLogger({
-    level,
-    format: winston.format.combine(
-      winston.format.timestamp(),
-      winston.format.json(),
-    ),
-    transports: [
-      new winston.transports.File({
-        filename,
-        options: { flags: "w" }, // 'w' flag truncates the file if it exists
-      }),
-    ],
-  });
+  
+  // Simple logger implementation
+  const logger = {
+    error: (message: string, ...args: any[]) => {
+      const timestamp = new Date().toISOString();
+      const logMessage = `[${timestamp}] ERROR: ${message}`;
+      console.error(logMessage, ...args);
+      // Write to file if needed
+      if (file) {
+        require('fs').appendFileSync(filename, logMessage + '\n');
+      }
+    },
+    warn: (message: string, ...args: any[]) => {
+      const timestamp = new Date().toISOString();
+      const logMessage = `[${timestamp}] WARN: ${message}`;
+      console.warn(logMessage, ...args);
+      if (file) {
+        require('fs').appendFileSync(filename, logMessage + '\n');
+      }
+    },
+    info: (message: string, ...args: any[]) => {
+      const timestamp = new Date().toISOString();
+      const logMessage = `[${timestamp}] INFO: ${message}`;
+      console.info(logMessage, ...args);
+      if (file) {
+        require('fs').appendFileSync(filename, logMessage + '\n');
+      }
+    },
+    debug: (message: string, ...args: any[]) => {
+      const timestamp = new Date().toISOString();
+      const logMessage = `[${timestamp}] DEBUG: ${message}`;
+      console.debug(logMessage, ...args);
+      if (file) {
+        require('fs').appendFileSync(filename, logMessage + '\n');
+      }
+    }
+  };
 
   return logger;
 }

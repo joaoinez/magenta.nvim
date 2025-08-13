@@ -1,15 +1,13 @@
+// Minimal predict-edit.ts for edit prediction only
 import { assertUnreachable } from "../utils/assertUnreachable.ts";
 import { d, type VDOMNode } from "../tea/view.ts";
 import { type Result } from "../utils/result.ts";
 import type { Dispatch } from "../tea/tea.ts";
-import type { StaticToolRequest } from "./toolManager.ts";
 import type {
   ProviderToolResult,
   ProviderToolResultContent,
   ProviderToolSpec,
 } from "../providers/provider.ts";
-import type { MessageId } from "../chat/message.ts";
-import type { ThreadId } from "../chat/types";
 import type { StaticTool, ToolName } from "./types.ts";
 
 export type State =
@@ -31,9 +29,9 @@ export class PredictEditTool implements StaticTool {
   toolName = "predict_edit" as const;
 
   constructor(
-    public request: Extract<StaticToolRequest, { toolName: "predict_edit" }>,
-    public threadId: ThreadId,
-    public messageId: MessageId,
+    public request: any,
+    public threadId: any,
+    public messageId: any,
     private context: {
       myDispatch: Dispatch<Msg>;
     },

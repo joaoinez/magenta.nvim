@@ -1,46 +1,35 @@
-import { attach, type LogLevel } from "./nvim/nvim-node";
-import { Magenta } from "./magenta.ts";
-import { notifyErr } from "./nvim/nvim.ts";
+// Minimal index.ts for edit prediction only
+import { attach } from "./nvim/nvim-node/attach.ts";
 
-// These values are set by neovim when starting the node process
-const ENV = {
-  NVIM: process.env["NVIM"],
-  LOG_LEVEL: process.env["LOG_LEVEL"] as LogLevel | undefined,
-  DEV: Boolean(process.env["IS_DEV"]),
-};
+async function main() {
+  // Check if we're in a neovim environment
+  const nvimAddr = process.env.NVIM;
+  if (!nvimAddr) {
+    console.error("NVIM environment variable not set");
+    process.exit(1);
+  }
 
-if (!ENV.NVIM) throw Error("socket missing");
-const nvim = await attach({
-  socket: ENV.NVIM,
-  client: { name: "magenta" },
-  logging: { level: ENV.LOG_LEVEL },
-});
+  try {
+    const nvim = await attach({
+      socket: nvimAddr,
+      client: { name: "magenta-prediction" }
+    });
+    console.log("Connected to Neovim");
 
-if (nvim.logger.error) {
-  const original = nvim.logger.error.bind(nvim.logger);
-  nvim.logger.error = ((error: Error | string, ...rest: unknown[]) => {
-    original(
-      error instanceof Error
-        ? `Error: ${error.message}\n${error.stack}`
-        : error,
-      ...rest,
-    );
-    notifyErr(nvim, error, ...rest).catch((err) =>
-      original(
-        err instanceof Error
-          ? `notifyErr failed: ${err.message}\n${err.stack}`
-          : err,
-      ),
-    );
-  }) as typeof original;
+    // Simple message handler for testing
+    nvim.onNotification("test", (args) => {
+      console.log("Received test notification:", args);
+    });
+
+    // Notify Neovim that we're ready
+    await nvim.call("nvim_exec_lua", ["return 'magenta_ready'", []]);
+  } catch (error) {
+    console.error("Failed to connect to Neovim:", error);
+    process.exit(1);
+  }
 }
 
-process.on("uncaughtException", (error) => {
-  nvim.logger.error(error);
-  setTimeout(() => {
-    // wait for logger to finish writing
-    process.exit(1);
-  }, 100);
+main().catch((error) => {
+  console.error("Unhandled error:", error);
+  process.exit(1);
 });
-
-await Magenta.start(nvim);

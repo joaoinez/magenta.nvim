@@ -18,7 +18,8 @@
     "msgpackr": "^1.11.2",
     "ollama": "^0.5.15",
     "openai": "^5.12.1",
-    "tsx": "^4.19.2"
+    "tsx": "^4.19.2",
+    "zx": "^8.8.0"
   },
   "overrides": {
     "@anthropic-ai/bedrock-sdk": {

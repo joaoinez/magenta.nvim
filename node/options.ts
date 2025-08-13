@@ -1,8 +1,6 @@
 import { PROVIDER_NAMES, type ProviderName } from "./providers/provider";
 import * as fs from "fs";
 import * as path from "path";
-import type { ServerName } from "./tools/mcp/types";
-import { validateServerName } from "./tools/mcp/types";
 import type { NvimCwd } from "./utils/files";
 
 // Default models by provider
@@ -140,7 +138,7 @@ export type MagentaOptions = {
   commandAllowlist: CommandAllowlist;
   autoContext: string[];
   maxConcurrentSubagents: number;
-  mcpServers: { [serverName: ServerName]: MCPServerConfig };
+  mcpServers: { [serverName: string]: MCPServerConfig };
   getFileAutoAllowGlobs: string[];
   lspDebounceMs?: number;
   debug?: boolean;
@@ -412,15 +410,6 @@ function parseMCPServers(
 
   for (const [serverName, serverConfig] of Object.entries(inputObj)) {
     try {
-      // Validate server name format
-      try {
-        validateServerName(serverName);
-      } catch (error) {
-        logger.warn(
-          `Skipping MCP server with invalid name "${serverName}": ${error instanceof Error ? error.message : String(error)}`,
-        );
-        continue;
-      }
 
       if (typeof serverConfig !== "object" || serverConfig === null) {
         logger.warn(

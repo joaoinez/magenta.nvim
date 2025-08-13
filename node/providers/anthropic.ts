@@ -16,8 +16,8 @@ import { assertUnreachable } from "../utils/assertUnreachable.ts";
 import { DEFAULT_SYSTEM_PROMPT } from "./system-prompt.ts";
 import { validateInput } from "../tools/helpers.ts";
 import type { ToolRequest } from "../tools/types.ts";
-import * as AnthropicAuth from "../auth/anthropic.ts";
-import open from "open";
+// import * as AnthropicAuth from "../auth/anthropic.ts";
+// import open from "open";
 
 function mapProviderTextToAnthropicText(
   providerText: ProviderTextContent,
@@ -104,22 +104,18 @@ export class AnthropicProvider implements Provider {
     ): Promise<Response> => {
       await this.ensureValidToken();
 
-      const accessToken = await AnthropicAuth.getAccessToken();
-      if (!accessToken) {
-        throw new Error("Failed to get valid OAuth access token");
+      const apiKey = this.client.apiKey;
+      if (!apiKey) {
+        throw new Error("Anthropic API key is required");
       }
-
+      
       const headers = {
         ...(init?.headers || {}),
-        authorization: `Bearer ${accessToken}`,
+        "x-api-key": apiKey,
         "anthropic-version": "2023-06-01",
         "anthropic-beta":
-          "oauth-2025-04-20,claude-code-20250219,interleaved-thinking-2025-05-14,fine-grained-tool-streaming-2025-05-14",
+          "claude-code-20250219,interleaved-thinking-2025-05-14,fine-grained-tool-streaming-2025-05-14",
       };
-
-      // Remove x-api-key header if present
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-      delete (headers as any)["x-api-key"];
 
       return fetch(input, {
         ...init,
@@ -129,56 +125,54 @@ export class AnthropicProvider implements Provider {
   }
 
   private async ensureValidToken(): Promise<void> {
-    const isAuthenticated = await AnthropicAuth.isAuthenticated();
-    if (!isAuthenticated) {
-      await this.triggerOAuthFlow();
-    }
+    // For API key authentication, no token validation needed
+    return;
   }
 
-  private async triggerOAuthFlow(): Promise<void> {
-    try {
-      const { url, verifier } = await AnthropicAuth.authorize();
+  // private async triggerOAuthFlow(): Promise<void> {
+//   try {
+//     const { url, verifier } = await AnthropicAuth.authorize();
 
-      // Show OAuth flow instructions in a floating window and get the auth code
-      const code = await this.showOAuthFlow(url);
+//     // Show OAuth flow instructions in a floating window and get the auth code
+//     const code = await this.showOAuthFlow(url);
 
-      // Exchange code for tokens
-      const tokens = await AnthropicAuth.exchange(code, verifier);
-      await AnthropicAuth.storeTokens(tokens);
+//     // Exchange code for tokens
+//     const tokens = await AnthropicAuth.exchange(code, verifier);
+//     await AnthropicAuth.storeTokens(tokens);
 
-      this.nvim.logger.info("OAuth authentication successful");
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      throw new Error(`OAuth authentication failed: ${message}`);
-    }
-  }
+//     this.nvim.logger.info("OAuth authentication successful");
+//   } catch (error) {
+//     const message = error instanceof Error ? error.message : String(error);
+//     throw new Error(`OAuth authentication failed: ${message}`);
+//   }
+// }
 
-  private async showOAuthFlow(authUrl: string): Promise<string> {
-    try {
-      await open(authUrl);
-    } catch {
-      this.nvim.logger.warn(
-        "Could not automatically open browser, please open URL manually",
-      );
-    }
+  // private async showOAuthFlow(authUrl: string): Promise<string> {
+//   try {
+//     await open(authUrl);
+//   } catch {
+//     this.nvim.logger.warn(
+//       "Could not automatically open browser, please open URL manually",
+//     );
+//   }
 
-    // Use nvim_exec_lua to show notification and get input
-    const luaScript = `
-      vim.notify(
-        "Claude Max Authentication Required\\n\\nThe browser should open automatically. If not, open this URL:\\n${authUrl}\\n\\nAfter completing the authorization process, copy the authorization code and paste it below.",
-        vim.log.levels.INFO
-      )
-      return vim.fn.input("Enter authorization code: ")
-    `;
+//   // Use nvim_exec_lua to show notification and get input
+//   const luaScript = `
+//     vim.notify(
+//       "Claude Max Authentication Required\\n\\nThe browser should open automatically. If not, open this URL:\\n${authUrl}\\n\\nAfter completing the authorization process, copy the authorization code and paste it below.",
+//       vim.log.levels.INFO
+//     )
+//     return vim.fn.input("Enter authorization code: ")
+//   `;
 
-    const code = await this.nvim.call("nvim_exec_lua", [luaScript, []]);
+//   const code = await this.nvim.call("nvim_exec_lua", [luaScript, []]);
 
-    if (!code || typeof code !== "string" || code.trim() === "") {
-      throw new Error("No authorization code provided");
-    }
+//   if (!code || typeof code !== "string" || code.trim() === "") {
+//     throw new Error("No authorization code provided");
+//   }
 
-    return code.trim();
-  }
+//   return code.trim();
+// }
 
   private getMaxTokensForModel(model: string): number {
     // Claude 4 models - use high limits

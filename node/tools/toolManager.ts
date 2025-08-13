@@ -1,20 +1,20 @@
-import * as GetFile from "./getFile.ts";
-import * as Insert from "./insert.ts";
-import * as Replace from "./replace.ts";
+// import * as GetFile from "./getFile.ts";
+// import * as Insert from "./insert.ts";
+// import * as Replace from "./replace.ts";
 
-import * as ListDirectory from "./listDirectory.ts";
-import * as Hover from "./hover.ts";
-import * as FindReferences from "./findReferences.ts";
-import * as Diagnostics from "./diagnostics.ts";
-import * as BashCommand from "./bashCommand.ts";
-import * as InlineEdit from "./inline-edit-tool.ts";
-import * as ReplaceSelection from "./replace-selection-tool.ts";
-import * as ThreadTitle from "./thread-title.ts";
-import * as ForkThread from "./fork-thread.ts";
-import * as SpawnSubagent from "./spawn-subagent.ts";
-import * as SpawnForeach from "./spawn-foreach.ts";
-import * as WaitForSubagents from "./wait-for-subagents.ts";
-import * as YieldToParent from "./yield-to-parent.ts";
+// import * as ListDirectory from "./listDirectory.ts";
+// import * as Hover from "./hover.ts";
+// import * as FindReferences from "./findReferences.ts";
+// import * as Diagnostics from "./diagnostics.ts";
+// import * as BashCommand from "./bashCommand.ts";
+// import * as InlineEdit from "./inline-edit-tool.ts";
+// import * as ReplaceSelection from "./replace-selection-tool.ts";
+// import * as ThreadTitle from "./thread-title.ts";
+// import * as ForkThread from "./fork-thread.ts";
+// import * as SpawnSubagent from "./spawn-subagent.ts";
+// import * as SpawnForeach from "./spawn-foreach.ts";
+// import * as WaitForSubagents from "./wait-for-subagents.ts";
+// import * as YieldToParent from "./yield-to-parent.ts";
 import * as PredictEdit from "./predict-edit.ts";
 
 import { assertUnreachable } from "../utils/assertUnreachable.ts";
@@ -23,9 +23,9 @@ import type { Nvim } from "../nvim/nvim-node";
 import type { Lsp } from "../lsp.ts";
 import type { MagentaOptions } from "../options.ts";
 import type { RootMsg } from "../root-msg.ts";
-import type { MessageId } from "../chat/message.ts";
-import type { BufferTracker } from "../buffer-tracker.ts";
-import type { Chat } from "../chat/chat.ts";
+// import type { MessageId } from "../chat/message.ts";
+// import type { BufferTracker } from "../buffer-tracker.ts";
+// import type { Chat } from "../chat/chat.ts";
 import type {
   ToolMsg,
   ToolName,
@@ -40,9 +40,9 @@ import {
   SUBAGENT_STATIC_TOOL_NAMES,
   type StaticToolName,
 } from "./tool-registry.ts";
-import { MCPToolManager } from "./mcp/manager.ts";
-import type { MCPTool } from "./mcp/tool.ts";
-import { unwrapMcpToolMsg } from "./mcp/types.ts";
+// import { MCPToolManager } from "./mcp/manager.ts";
+// import type { MCPTool } from "./mcp/tool.ts";
+// import { unwrapMcpToolMsg } from "./mcp/types.ts";
 import type { ThreadId, ThreadType } from "../chat/types.ts";
 import type { NvimCwd } from "../utils/files.ts";
 export type { Tool, ToolRequestId } from "./types.ts";
