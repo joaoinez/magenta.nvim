@@ -42,11 +42,11 @@ Magenta.nvim is a Neovim AI coding assistant built with TypeScript and Lua, foll
 3. `node/magenta.ts` - Main controller with central message dispatcher
 
 **Core Controllers:**
-- `Chat` (`node/chat/`) - Manages conversation threads and messages
+- `Chat` (`node/chat/`) - Manages conversation threads and messages  
 - `Sidebar` (`node/sidebar.ts`) - Handles UI sidebar state and display
 - `EditPredictionController` (`node/edit-prediction/`) - Handles AI-powered edit predictions (PRIMARY FEATURE)
 - `ContextManager` (`node/context/`) - Manages file context for conversations
-- `ToolManager` (`node/tools/`) - Executes and tracks tool usage
+- `ToolManager` (`node/tools/`) - Minimal tool system supporting only predict_edit tool
 
 **Communication Layer:**
 - `node/nvim/` - Neovim API bindings and buffer management
@@ -89,12 +89,20 @@ Magenta.nvim is a Neovim AI coding assistant built with TypeScript and Lua, foll
 3. Use the central dispatcher for cross-controller communication
 4. Add appropriate tool implementations in `node/tools/`
 
-### Tool Development
-Each tool should:
-- Implement the tool interface defined in `node/tools/types.ts`
-- Handle user approval for sensitive operations
-- Provide clear progress feedback and error messages
-- Include comprehensive tests
+### Tool Development  
+The tool system has been simplified to support only the predict_edit tool:
+- Only `predict_edit` tool remains active
+- Located in `node/tools/predict-edit.ts` 
+- Implements StaticTool interface from `node/tools/types.ts`
+- Used exclusively by EditPredictionController
+
+**Removed AI Agent Tools:**
+- File manipulation: `get_file`, `insert`, `replace`, `list_directory`
+- Code intelligence: `hover`, `find_references`, `diagnostics`  
+- Shell execution: `bash_command`
+- Thread/agent management: `thread_title`, `fork_thread`, `spawn_subagent`, `spawn_foreach`, `wait_for_subagents`, `yield_to_parent`
+- MCP integration: `mcp/` directory removed
+- File utilities: `applyEdit`, `file-snapshots`, `display-snapshot-diff`
 
 ### Key Patterns
 - Controllers manage their own state rather than pure functional updates
