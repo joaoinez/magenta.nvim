@@ -7,8 +7,6 @@ export const STATIC_TOOL_NAMES = [
   "find_references",
   "diagnostics",
   "bash_command",
-  "inline_edit",
-  "replace_selection",
   "thread_title",
   "fork_thread",
   "spawn_subagent",

@@ -15,7 +15,6 @@ import {
   type MagentaOptions,
   getActiveProfile,
 } from "./options.ts";
-import { InlineEditManager } from "./inline-edit/inline-edit-app.ts";
 import type { RootMsg, SidebarMsg } from "./root-msg.ts";
 import { Chat } from "./chat/chat.ts";
 import type { Dispatch } from "./tea/tea.ts";
@@ -50,7 +49,6 @@ export class Magenta {
   public sidebar: Sidebar;
   public chatApp: TEA.App<Chat>;
   public mountedChatApp: TEA.MountedApp | undefined;
-  public inlineEditManager: InlineEditManager;
   public chat: Chat;
   public dispatch: Dispatch<RootMsg>;
   public bufferTracker: BufferTracker;
@@ -128,12 +126,6 @@ export class Magenta {
       View: () => this.chat.view(),
     });
 
-    this.inlineEditManager = new InlineEditManager({
-      nvim,
-      cwd: this.cwd,
-      options,
-      getMessages: () => this.chat.getMessages(),
-    });
   }
 
   getActiveProfile() {
@@ -200,8 +192,6 @@ export class Magenta {
         if (profile) {
           this.options.activeProfile = profile.name;
 
-          // Update inline edit manager with new options
-          this.inlineEditManager.updateOptions(this.options);
 
           this.dispatch({
             type: "thread-msg",
@@ -326,7 +316,6 @@ export class Magenta {
           },
         });
 
-        this.inlineEditManager.abort();
 
         break;
       }
@@ -424,41 +413,6 @@ ${lines.join("\n")}
         break;
       }
 
-      case "start-inline-edit-selection": {
-        const [startPos, endPos] = await Promise.all([
-          getpos(this.nvim, "'<"),
-          getpos(this.nvim, "'>"),
-        ]);
-
-        await this.inlineEditManager.initInlineEdit({
-          startPos,
-          endPos,
-        });
-        break;
-      }
-
-      case "start-inline-edit": {
-        await this.inlineEditManager.initInlineEdit();
-        break;
-      }
-
-      case "replay-inline-edit": {
-        await this.inlineEditManager.replay();
-        break;
-      }
-
-      case "replay-inline-edit-selection": {
-        const [startPos, endPos] = await Promise.all([
-          getpos(this.nvim, "'<"),
-          getpos(this.nvim, "'>"),
-        ]);
-
-        await this.inlineEditManager.replay({
-          startPos,
-          endPos,
-        });
-        break;
-      }
 
       case "predict-edit": {
         if (
@@ -517,24 +471,6 @@ ${lines.join("\n")}
         break;
       }
 
-      case "submit-inline-edit": {
-        if (rest.length != 1 || typeof rest[0] != "string") {
-          this.nvim.logger.error(
-            `Expected bufnr argument to submit-inline-edit`,
-          );
-          return;
-        }
-
-        const bufnr = Number.parseInt(rest[0]) as BufNr;
-        const chat = this.chatApp.getState();
-        if (chat.status !== "running") {
-          this.nvim.logger.error(`Chat is not running.`);
-          return;
-        }
-
-        await this.inlineEditManager.submitInlineEdit(bufnr);
-        break;
-      }
 
       default:
         this.nvim.logger.error(`Unrecognized command ${command}\n`);
@@ -565,10 +501,7 @@ ${lines.join("\n")}
   }
 
   async onWinClosed() {
-    await Promise.all([
-      this.sidebar.onWinClosed(),
-      this.inlineEditManager.onWinClosed(),
-    ]);
+    await this.sidebar.onWinClosed();
   }
 
   onBufferTrackerEvent(
@@ -630,11 +563,6 @@ ${lines.join("\n")}
       this.mountedChatApp.unmount();
       this.mountedChatApp = undefined;
     }
-    this.inlineEditManager.destroy().catch((e) => {
-      this.nvim.logger.warn(
-        `Error destroying inline edit manager: ${e instanceof Error ? e.message + "\n" + e.stack : JSON.stringify(e)}`,
-      );
-    });
   }
 
   static async start(nvim: Nvim) {

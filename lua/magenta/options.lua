@@ -83,13 +83,6 @@ local defaults = {
     -- systemPrompt = "Your custom prediction system prompt here...",
     -- systemPromptAppend = "Focus on completing function calls and variable declarations."
   },
-  inlineKeymaps = {
-    normal = {
-      ["<CR>"] = function(target_bufnr)
-        vim.cmd("Magenta submit-inline-edit " .. target_bufnr)
-      end,
-    },
-  },
   -- note: some OSs are case sensitive, and some are not.
   -- to make this work cross-platform, we will run all globs
   -- in case-insensitive mode.

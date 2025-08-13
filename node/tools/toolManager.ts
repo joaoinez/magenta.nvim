@@ -7,8 +7,6 @@ import * as Hover from "./hover.ts";
 import * as FindReferences from "./findReferences.ts";
 import * as Diagnostics from "./diagnostics.ts";
 import * as BashCommand from "./bashCommand.ts";
-import * as InlineEdit from "./inline-edit-tool.ts";
-import * as ReplaceSelection from "./replace-selection-tool.ts";
 import * as ThreadTitle from "./thread-title.ts";
 import * as ForkThread from "./fork-thread.ts";
 import * as SpawnSubagent from "./spawn-subagent.ts";
@@ -96,18 +94,6 @@ export type StaticToolMap = {
     input: BashCommand.Input;
     msg: BashCommand.Msg;
     spec: typeof BashCommand.spec;
-  };
-  inline_edit: {
-    controller: InlineEdit.InlineEditTool;
-    input: InlineEdit.Input;
-    msg: InlineEdit.Msg;
-    spec: typeof InlineEdit.spec;
-  };
-  replace_selection: {
-    controller: ReplaceSelection.ReplaceSelectionTool;
-    input: ReplaceSelection.Input;
-    msg: ReplaceSelection.Msg;
-    spec: typeof ReplaceSelection.spec;
   };
   thread_title: {
     controller: ThreadTitle.ThreadTitleTool;
@@ -220,8 +206,6 @@ export class ToolManager {
     find_references: FindReferences.spec,
     diagnostics: Diagnostics.spec,
     bash_command: BashCommand.spec,
-    inline_edit: InlineEdit.spec,
-    replace_selection: ReplaceSelection.spec,
     thread_title: ThreadTitle.spec,
     fork_thread: ForkThread.spec,
     spawn_subagent: SpawnSubagent.spec,
@@ -493,12 +477,6 @@ export class ToolManager {
             return;
           }
 
-          case "inline_edit": {
-            throw new Error(`Not supported.`);
-          }
-          case "replace_selection": {
-            throw new Error(`Not supported.`);
-          }
 
           case "thread_title": {
             const threadTitleTool = new ThreadTitle.ThreadTitleTool(

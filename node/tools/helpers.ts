@@ -7,8 +7,6 @@ import * as Hover from "./hover";
 import * as FindReferences from "./findReferences";
 import * as Diagnostics from "./diagnostics";
 import * as BashCommand from "./bashCommand";
-import * as ReplaceSelection from "./replace-selection-tool";
-import * as InlineEdit from "./inline-edit-tool";
 import * as ThreadTitle from "./thread-title";
 import * as ForkThread from "./fork-thread";
 import * as SpawnSubagent from "./spawn-subagent";
@@ -52,10 +50,6 @@ export function validateInput(
       return Diagnostics.validateInput();
     case "bash_command":
       return BashCommand.validateInput(input);
-    case "inline_edit":
-      return InlineEdit.validateInput(input);
-    case "replace_selection":
-      return ReplaceSelection.validateInput(input);
     case "thread_title":
       return ThreadTitle.validateInput(input);
     case "fork_thread":
@@ -95,8 +89,6 @@ export function renderStreamdedTool(
     case "find_references":
     case "diagnostics":
     case "bash_command":
-    case "inline_edit":
-    case "replace_selection":
     case "thread_title":
     case "fork_thread":
     case "spawn_subagent":
