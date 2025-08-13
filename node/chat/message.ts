@@ -8,7 +8,7 @@ import { openFileInNonMagentaWindow } from "../nvim/openFileInNonMagentaWindow.t
 import type { MagentaOptions } from "../options.ts";
 // Removed tools - using stubs  
 type FileSnapshots = any;
-const displaySnapshotDiff = () => "";
+const displaySnapshotDiff = () => Promise.resolve("");
 import {
   relativePath,
   type AbsFilePath,

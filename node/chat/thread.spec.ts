@@ -3,7 +3,8 @@ import { LOGO } from "./thread.ts";
 import { type ToolRequestId } from "../tools/toolManager.ts";
 import { describe, expect, it } from "vitest";
 import type { UnresolvedFilePath } from "../utils/files.ts";
-import { type Input as ForkThreadInput } from "../tools/fork-thread.ts";
+// ForkThread removed - using stub
+type ForkThreadInput = any;
 import type { ToolName } from "../tools/types.ts";
 import { pollUntil } from "../utils/async.ts";
 import { getcwd } from "../nvim/nvim.ts";

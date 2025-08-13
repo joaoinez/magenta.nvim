@@ -24,6 +24,7 @@ class FileSnapshots {
   constructor() {}
   isEmpty() { return true; }
   get() { return {}; }
+  willEditFile() { return false; }
 }
 import type { Nvim } from "../nvim/nvim-node";
 import type { Lsp } from "../lsp.ts";
@@ -44,10 +45,13 @@ import { type MagentaOptions, type Profile } from "../options.ts";
 import type { RootMsg } from "../root-msg.ts";
 import type { NvimCwd, UnresolvedFilePath } from "../utils/files.ts";
 import type { BufferTracker } from "../buffer-tracker.ts";
-import {
-  type Input as ThreadTitleInput,
-  spec as threadTitleToolSpec,
-} from "../tools/thread-title.ts";
+// ThreadTitle removed - using stubs
+type ThreadTitleInput = { title: string };
+const threadTitleToolSpec = {
+  name: "thread_title", 
+  description: "Set thread title",
+  input_schema: { type: "object", properties: {} }
+};
 import {
   resolveFilePath,
   relativePath,
