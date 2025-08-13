@@ -1,64 +1,13 @@
 local M = {}
 
-local Actions = require("magenta.actions")
 local Options = require("magenta.options")
 
 M.default_keymaps = function()
   vim.keymap.set(
     "n",
-    "<leader>mc",
-    ":Magenta clear<CR>",
-    { silent = true, noremap = true, desc = "Clear Magenta state" }
-  )
-
-  vim.keymap.set(
-    "n",
     "<leader>ma",
     ":Magenta abort<CR>",
-    { silent = true, noremap = true, desc = "Abort current Magenta operation" }
-  )
-
-  vim.keymap.set(
-    "n",
-    "<leader>mt",
-    ":Magenta toggle<CR>",
-    { silent = true, noremap = true, desc = "Toggle Magenta window" }
-  )
-
-
-  vim.keymap.set(
-    "v",
-    "<leader>mp",
-    ":Magenta paste-selection<CR>",
-    { silent = true, noremap = true, desc = "Send selection to Magenta" }
-  )
-
-  vim.keymap.set(
-    "n",
-    "<leader>mb", -- like "magenta buffer"?
-    Actions.add_buffer_to_context,
-    { silent = true, noremap = true, desc = "Add current buffer to Magenta context" }
-  )
-
-  vim.keymap.set(
-    "n",
-    "<leader>mf",
-    Actions.pick_context_files,
-    { silent = true, noremap = true, desc = "Select files to add to Magenta context" }
-  )
-
-  vim.keymap.set(
-    "n",
-    "<leader>mp",
-    Actions.pick_profile,
-    { silent = true, noremap = true, desc = "Select profile" }
-  )
-
-  vim.keymap.set(
-    "n",
-    "<leader>mn",
-    ":Magenta new-thread<CR>",
-    { silent = true, noremap = true, desc = "Create a new thread" }
+    { silent = true, noremap = true, desc = "Abort/dismiss current prediction" }
   )
 
   vim.keymap.set(

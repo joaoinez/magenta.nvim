@@ -1,6 +1,5 @@
 local Utils = require("magenta.utils")
 local Options = require("magenta.options")
-require("magenta.actions")
 local M = {}
 local LspServer = require('magenta.lsp-server')
 
@@ -54,21 +53,13 @@ end
 
 local normal_commands = {
   "abort",
-  "clear",
-  "context-files",
   "debug-prediction-message",
-  "profile",
-  "toggle",
-  "new-thread",
-  "threads-overview",
   "predict-edit",
   "accept-prediction",
   "dismiss-prediction",
 }
 
-local visual_commands = {
-  "paste-selection",
-}
+local visual_commands = {}
 
 M.bridge = function(channelId)
   -- Store the channel ID for later use by other functions

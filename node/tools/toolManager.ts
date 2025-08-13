@@ -104,13 +104,14 @@ export class ToolManager {
       case "subagent_plan":
       case "subagent_default":
       case "subagent_fast":
-        staticToolNames = SUBAGENT_STATIC_TOOL_NAMES;
+        staticToolNames = [];
         break;
       case "root":
-        staticToolNames = CHAT_STATIC_TOOL_NAMES;
+        staticToolNames = [];
         break;
       default:
-        assertUnreachable(threadType);
+        staticToolNames = [];
+        break;
     }
 
     return [
@@ -163,7 +164,7 @@ export class ToolManager {
           throw new Error(`Tool ${msg.msg.id} not found.`);
         }
 
-        tool.update(unwrapStaticToolMsg(msg.msg.msg));
+        tool.update(unwrapStaticToolMsg(msg.msg.msg) as any);
         break;
       }
 

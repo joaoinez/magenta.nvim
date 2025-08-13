@@ -96,7 +96,7 @@ export class EditPredictionController {
       options: MagentaOptions;
     },
   ) {
-    this.myDispatch = (msg) =>
+    this.myDispatch = (msg: EditPredictionMsg) =>
       this.context.dispatch({
         type: "edit-prediction-msg",
         id: this.id,
