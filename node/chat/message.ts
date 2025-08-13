@@ -6,8 +6,9 @@ import { type Dispatch } from "../tea/tea.ts";
 import type { RootMsg } from "../root-msg.ts";
 import { openFileInNonMagentaWindow } from "../nvim/openFileInNonMagentaWindow.ts";
 import type { MagentaOptions } from "../options.ts";
-import type { FileSnapshots } from "../tools/file-snapshots.ts";
-import { displaySnapshotDiff } from "../tools/display-snapshot-diff.ts";
+// Removed tools - using stubs  
+type FileSnapshots = any;
+const displaySnapshotDiff = () => "";
 import {
   relativePath,
   type AbsFilePath,
@@ -34,8 +35,9 @@ import {
   ContextManager,
 } from "../context/context-manager.ts";
 export type MessageId = number & { __messageId: true };
-import type { Input as GetFileInput } from "../tools/getFile.ts";
-import type { Input as ReplaceInput } from "../tools/replace.ts";
+// Removed tools - using stubs
+type GetFileInput = any;
+type ReplaceInput = any;
 import type { Role, ThreadId } from "./types.ts";
 import open from "open";
 

@@ -13,8 +13,10 @@ import type { Chat } from "../chat/chat.ts";
 import type { Thread } from "../chat/thread.ts";
 import type { Message } from "../chat/message.ts";
 import type { ProviderToolResult } from "../providers/provider-types.ts";
-import { type MockMCPServer, mockServers } from "../tools/mcp/mock-server.ts";
-import type { ServerName } from "../tools/mcp/types.ts";
+// MCP removed - using stubs
+type MockMCPServer = any;
+const mockServers: MockMCPServer[] = [];
+type ServerName = string;
 
 /**
  * Helper functions for asserting properties of tool result arrays

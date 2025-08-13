@@ -11,9 +11,20 @@ import {
   type Msg as ToolManagerMsg,
   type StaticToolRequest,
 } from "../tools/toolManager.ts";
-import { MCPToolManager } from "../tools/mcp/manager.ts";
+// MCPToolManager removed - using stub
+class MCPToolManager {
+  getToolSpecs() { return []; }
+  getTool() { return null; }
+  isMCPTool() { return false; }
+  updateTool() {}
+}
 import { Counter } from "../utils/uniqueId.ts";
-import { FileSnapshots } from "../tools/file-snapshots.ts";
+// FileSnapshots removed - using stub  
+class FileSnapshots {
+  constructor() {}
+  isEmpty() { return true; }
+  get() { return {}; }
+}
 import type { Nvim } from "../nvim/nvim-node";
 import type { Lsp } from "../lsp.ts";
 import { getDiagnostics } from "../utils/diagnostics.ts";

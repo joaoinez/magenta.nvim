@@ -1,8 +1,9 @@
 import { PROVIDER_NAMES, type ProviderName } from "./providers/provider";
 import * as fs from "fs";
 import * as path from "path";
-import type { ServerName } from "./tools/mcp/types";
-import { validateServerName } from "./tools/mcp/types";
+// MCP types removed - using minimal stubs
+type ServerName = string;
+const validateServerName = (name: string): ServerName => name;
 import type { NvimCwd } from "./utils/files";
 
 // Default models by provider

@@ -19,15 +19,21 @@ import {
 import type { Result } from "../utils/result.ts";
 import { wrapStaticToolMsg, type ToolRequestId } from "../tools/toolManager.ts";
 import type { ToolMsg, ToolName } from "../tools/types.ts";
-import { MCPToolManager } from "../tools/mcp/manager.ts";
-import type { WaitForSubagentsTool } from "../tools/wait-for-subagents.ts";
+// MCPToolManager removed - using stub
+class MCPToolManager {
+  getToolSpecs() { return []; }
+  getTool() { return null; }
+  isMCPTool() { return false; }
+  updateTool() {}
+}
+// WaitForSubagentsTool removed - using stub
+type WaitForSubagentsTool = any;
 import type { ThreadId, ThreadType } from "./types.ts";
 import { createSystemPrompt } from "../providers/system-prompt.ts";
-import type {
-  ForEachElement,
-  SpawnForeachTool,
-} from "../tools/spawn-foreach.ts";
-import type { Msg as ForkThreadMsg } from "../tools/fork-thread.ts";
+// Removed tools - using stubs
+type ForEachElement = any;
+type SpawnForeachTool = any;
+type ForkThreadMsg = any;
 
 type ThreadWrapper = (
   | {
